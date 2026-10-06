@@ -1,120 +1,180 @@
--- Skapa GUI-behållaren
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local UIListLayout = Instance.new("UIListLayout")
-local TitleLabel = Instance.new("TextLabel")
-local ToggleGuiButton = Instance.new("TextButton")
+-- Services
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 
--- Sätt upp ScreenGui
+-- Create Main ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Emil_axelgsGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 
--- Knapp för att öppna/stänga hela gränssnittet
+-- Toggle GUI Button (On screen)
+local ToggleGuiButton = Instance.new("TextButton")
 ToggleGuiButton.Name = "ToggleGuiButton"
 ToggleGuiButton.Parent = ScreenGui
-ToggleGuiButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleGuiButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 ToggleGuiButton.BorderSizePixel = 0
 ToggleGuiButton.Position = UDim2.new(0.01, 0, 0.01, 0)
-ToggleGuiButton.Size = UDim2.new(0, 100, 0, 30)
-ToggleGuiButton.Font = Enum.Font.SourceSansBold
+ToggleGuiButton.Size = UDim2.new(0, 110, 0, 35)
+ToggleGuiButton.Font = Enum.Font.GothamBold
 ToggleGuiButton.Text = "Toggle GUI"
 ToggleGuiButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleGuiButton.TextSize = 14
+ToggleGuiButton.TextSize = 13
 
--- Huvudfönster
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = ToggleGuiButton
+
+-- Main Window Frame
+local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.01, 0, 0.06, 0)
-MainFrame.Size = UDim2.new(0, 240, 0, 430)
+MainFrame.Position = UDim2.new(0.01, 0, 0.07, 0)
+MainFrame.Size = UDim2.new(0, 260, 0, 400)
 MainFrame.Visible = true
 
--- Öppna/stäng logik för GUI
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+-- Top Bar / Title
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "  Emil_axelgs GUI"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 15
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = TitleLabel
+
+-- Make Window Draggable
+local dragging, dragInput, dragStart, startPos
+TitleLabel.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+TitleLabel.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
 ToggleGuiButton.MouseButton1Click:Connect(function()
 	MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Titel
-TitleLabel.Name = "TitleLabel"
-TitleLabel.Parent = MainFrame
-TitleLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-TitleLabel.BorderSizePixel = 0
-TitleLabel.Size = UDim2.new(1, 0, 0, 35)
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.Text = "Emil_axelgs GUI"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
+-- Scrolling Container for Elements
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Parent = MainFrame
+ScrollingFrame.Active = true
+ScrollingFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.Position = UDim2.new(0, 0, 0, 45)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -45)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 750)
+ScrollingFrame.ScrollBarThickness = 6
 
--- Layout
-UIListLayout.Parent = MainFrame
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = ScrollingFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 5)
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Funktion för att skapa av/på-knappar (Toggles)
+-- Helper: Create Input Boxes
+local function createTextBox(placeholder, defaultText)
+	local TextBox = Instance.new("TextBox")
+	TextBox.Parent = ScrollingFrame
+	TextBox.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+	TextBox.BorderSizePixel = 0
+	TextBox.Size = UDim2.new(0.9, 0, 0, 32)
+	TextBox.Font = Enum.Font.Gotham
+	TextBox.PlaceholderText = placeholder
+	TextBox.Text = defaultText
+	TextBox.TextColor3 = Color3.fromRGB(220, 220, 220)
+	TextBox.TextSize = 13
+	
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 6)
+	Corner.Parent = TextBox
+	return TextBox
+end
+
+-- Helper: Create Toggles
 local function createToggle(name, callback)
 	local ToggleButton = Instance.new("TextButton")
-	ToggleButton.Name = name .. "Toggle"
-	ToggleButton.Parent = MainFrame
-	ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	ToggleButton.Parent = ScrollingFrame
+	ToggleButton.BackgroundColor3 = Color3.fromRGB(42, 42, 50)
 	ToggleButton.BorderSizePixel = 0
-	ToggleButton.Size = UDim2.new(1, 0, 0, 32)
-	ToggleButton.Font = Enum.Font.SourceSans
-	ToggleButton.Text = name .. ": OFF"
+	ToggleButton.Size = UDim2.new(0.9, 0, 0, 36)
+	ToggleButton.Font = Enum.Font.GothamMedium
+	ToggleButton.Text = "  " .. name .. ": OFF"
 	ToggleButton.TextColor3 = Color3.fromRGB(255, 100, 100)
-	ToggleButton.TextSize = 14
+	ToggleButton.TextSize = 13
+	ToggleButton.TextXAlignment = Enum.TextXAlignment.Left
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 6)
+	Corner.Parent = ToggleButton
 
 	local active = false
-	
 	ToggleButton.MouseButton1Click:Connect(function()
 		active = not active
 		if active then
-			ToggleButton.Text = name .. ": ON"
+			ToggleButton.Text = "  " .. name .. ": ON"
 			ToggleButton.TextColor3 = Color3.fromRGB(100, 255, 100)
-			ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
+			ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 60, 40)
 		else
-			ToggleButton.Text = name .. ": OFF"
+			ToggleButton.Text = "  " .. name .. ": OFF"
 			ToggleButton.TextColor3 = Color3.fromRGB(255, 100, 100)
-			ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			ToggleButton.BackgroundColor3 = Color3.fromRGB(42, 42, 50)
 		end
 		callback(active)
 	end)
 end
 
--- 1. Textruta för att skriva in Brainrot-namn till Auto Collect
-local BrainrotInputBox = Instance.new("TextBox")
-BrainrotInputBox.Name = "BrainrotInputBox"
-BrainrotInputBox.Parent = MainFrame
-BrainrotInputBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-BrainrotInputBox.BorderSizePixel = 0
-BrainrotInputBox.Size = UDim2.new(1, 0, 0, 30)
-BrainrotInputBox.Font = Enum.Font.SourceSans
-BrainrotInputBox.PlaceholderText = "Type Brainrot Name Here..."
-BrainrotInputBox.Text = "Spaghetti Tualetti" -- Standardvärde
-BrainrotInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-BrainrotInputBox.TextSize = 14
-
--- 2. Auto Collect Money Toggle (Sökning i hela Workspace efter namnet)
+-- 1. Auto Collect Controls
+local BrainrotInputBox = createTextBox("Target Brainrot Name...", "Spaghetti Tualetti")
 local autoCollectActive = false
-createToggle("Auto Collect Money", function(state)
-	autoCollectActive = state
-end)
+createToggle("Auto Collect Money", function(state) autoCollectActive = state end)
 
 task.spawn(function()
 	while true do
 		if autoCollectActive then
 			pcall(function()
 				local targetName = BrainrotInputBox.Text
-				local foundTarget = workspace:FindFirstChild(targetName, true) -- Sök rekursivt i workspace
-				
+				local foundTarget = workspace:FindFirstChild(targetName, true)
 				if foundTarget then
-					local args = {
-						"take a shower",
-						44394224,
-						foundTarget
-					}
-					game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+					local args = {"take a shower", 44394224, foundTarget}
+					ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
 				end
 			end)
 		end
@@ -122,151 +182,133 @@ task.spawn(function()
 	end
 end)
 
--- 3. Auto Lock Base Toggle
+-- 2. Auto Lock Base Toggle
 local autoLockActive = false
-createToggle("Auto Lock Base", function(state)
-	autoLockActive = state
-end)
+createToggle("Auto Lock Base", function(state) autoLockActive = state end)
 
 task.spawn(function()
 	while true do
 		if autoLockActive then
 			pcall(function()
-				local args = {
-					"take a shower2",
-					375625560
-				}
-				game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+				local args = {"take a shower2", 375625560}
+				ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
 			end)
 		end
 		task.wait(1)
 	end
 end)
 
--- 4. Auto Spin Wheel Toggle
+-- 3. Auto Spin Wheel Toggle
 local autoSpinActive = false
-createToggle("Auto Spin Wheel", function(state)
-	autoSpinActive = state
-end)
+createToggle("Auto Spin Wheel", function(state) autoSpinActive = state end)
 
 task.spawn(function()
 	while true do
 		if autoSpinActive then
 			pcall(function()
-				local args = {
-					"spinwheel",
-					157711808
-				}
-				game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+				local args = {"spinwheel", 157711808}
+				ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
 			end)
 		end
 		task.wait(2)
 	end
 end)
 
--- 5. Auto Buy Diamond Block Toggle
+-- 4. Auto Buy Diamond Block Controls
+local DiamondInputBox = createTextBox("Diamond Block Item Name...", "Diamond Block")
 local autoBuyDiamondActive = false
-createToggle("Auto Buy Diamond Block", function(state)
-	autoBuyDiamondActive = state
-end)
+createToggle("Auto Buy Diamond Block", function(state) autoBuyDiamondActive = state end)
 
 task.spawn(function()
 	while true do
 		if autoBuyDiamondActive then
 			pcall(function()
-				local args = {
-					"bypassthis2",
-					28928448,
-					"Diamond Block",
-					1
-				}
-				game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+				local args = {"bypassthis2", 28928448, DiamondInputBox.Text, 1}
+				ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
 			end)
 		end
 		task.wait(2)
 	end
 end)
 
--- 6. Speed Boost Toggle (Sätter hastighet till 37)
+-- 5. Auto Buy Defense Controls
+local DefenseInputBox = createTextBox("Defense Item Name...", "Laser Door")
+local autoBuyDefenseActive = false
+createToggle("Auto Buy Defense", function(state) autoBuyDefenseActive = state end)
+
+task.spawn(function()
+	while true do
+		if autoBuyDefenseActive then
+			pcall(function()
+				local args = {"bypassthis2", 470940160, DefenseInputBox.Text, 1}
+				ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
+			end)
+		end
+		task.wait(2)
+	end
+end)
+
+-- 6. Speed Boost Toggle
 createToggle("Speed Boost (37)", function(state)
-	local player = game:GetService("Players").LocalPlayer
 	local function updateSpeed()
-		if player.Character and player.Character:FindFirstChild("Humanoid") then
-			if state then
-				player.Character.Humanoid.WalkSpeed = 37
-			else
-				player.Character.Humanoid.WalkSpeed = 16
-			end
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+			LocalPlayer.Character.Humanoid.WalkSpeed = state and 37 or 16
 		end
 	end
 	updateSpeed()
-	player.CharacterAdded:Connect(function(char)
+	LocalPlayer.CharacterAdded:Connect(function(char)
 		char:WaitForChild("Humanoid")
-		if state then
-			char.Humanoid.WalkSpeed = 37
-		end
+		if state then char.Humanoid.WalkSpeed = 37 end
 	end)
 end)
 
--- 7. Roof Noclip (3 sekunder)
+-- 7. Roof Noclip Button
 local RoofNoclipButton = Instance.new("TextButton")
-RoofNoclipButton.Name = "RoofNoclipToggle"
-RoofNoclipButton.Parent = MainFrame
-RoofNoclipButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+RoofNoclipButton.Parent = ScrollingFrame
+RoofNoclipButton.BackgroundColor3 = Color3.fromRGB(42, 42, 50)
 RoofNoclipButton.BorderSizePixel = 0
-RoofNoclipButton.Size = UDim2.new(1, 0, 0, 32)
-RoofNoclipButton.Font = Enum.Font.SourceSans
-RoofNoclipButton.Text = "Roof Noclip (3s)"
-RoofNoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-RoofNoclipButton.TextSize = 14
+RoofNoclipButton.Size = UDim2.new(0.9, 0, 0, 36)
+RoofNoclipButton.Font = Enum.Font.GothamMedium
+RoofNoclipButton.Text = "  Roof Noclip (3s)"
+RoofNoclipButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+RoofNoclipButton.TextSize = 13
+RoofNoclipButton.TextXAlignment = Enum.TextXAlignment.Left
+
+local RoofCorner = Instance.new("UICorner")
+RoofCorner.CornerRadius = UDim.new(0, 6)
+RoofCorner.Parent = RoofNoclipButton
 
 RoofNoclipButton.MouseButton1Click:Connect(function()
-	RoofNoclipButton.Text = "Roof Noclip: ACTIVE"
+	RoofNoclipButton.Text = "  Roof Noclip: ACTIVE"
 	RoofNoclipButton.TextColor3 = Color3.fromRGB(100, 255, 100)
-	RoofNoclipButton.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
 	
-	local player = game:GetService("Players").LocalPlayer
-	local runService = game:GetService("RunService")
-	
-	local connection
-	connection = runService.Stepped:Connect(function()
-		if player.Character then
-			for _, part in pairs(player.Character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
-				end
+	local connection = RunService.Stepped:Connect(function()
+		if LocalPlayer.Character then
+			for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
 			end
 		end
 	end)
 	
-	local infJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
-		if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-			player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	local infJumpConn = UserInputService.JumpRequest:Connect(function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+			LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 		end
 	end)
 	
 	task.delay(3, function()
 		if connection then connection:Disconnect() end
 		if infJumpConn then infJumpConn:Disconnect() end
-		RoofNoclipButton.Text = "Roof Noclip (3s)"
-		RoofNoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-		RoofNoclipButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		RoofNoclipButton.Text = "  Roof Noclip (3s)"
+		RoofNoclipButton.TextColor3 = Color3.fromRGB(220, 220, 220)
 	end)
 end)
 
--- 8. Player ESP Toggle (Visar användarnamn, lag och avstånd)
-local espActive = false
+-- 8. Player ESP Toggle
 createToggle("Player ESP", function(state)
-	espActive = state
-	local players = game:GetService("Players")
-	local localPlayer = players.LocalPlayer
-	local runService = game:GetService("RunService")
-	
 	local function setupEsp(plr)
-		if plr == localPlayer then return end
-		
+		if plr == LocalPlayer then return end
 		local function applyToChar(char)
-			-- Highlight för att se spelaren genom väggar
 			if not char:FindFirstChild("Highlight") then
 				local hl = Instance.new("Highlight")
 				hl.Name = "Highlight"
@@ -276,7 +318,6 @@ createToggle("Player ESP", function(state)
 				hl.OutlineColor = Color3.fromRGB(255, 255, 255)
 			end
 			
-			-- BillboardGui för Namn, Lag och Avstånd
 			local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
 			if head and not head:FindFirstChild("EspTag") then
 				local billboard = Instance.new("BillboardGui")
@@ -287,21 +328,17 @@ createToggle("Player ESP", function(state)
 				billboard.AlwaysOnTop = true
 				
 				local textLabel = Instance.new("TextLabel")
-				textLabel.Name = "Text"
 				textLabel.Parent = billboard
 				textLabel.BackgroundTransparency = 1
 				textLabel.Size = UDim2.new(1, 0, 1, 0)
-				textLabel.Font = Enum.Font.SourceSansBold
+				textLabel.Font = Enum.Font.GothamBold
 				textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-				textLabel.TextSize = 13
-				textLabel.TextStrokeTransparency = 0.5
-				textLabel.Parent = billboard
+				textLabel.TextSize = 12
+				textLabel.TextStrokeTransparency = 0.4
 				billboard.Parent = head
 				
-				-- Uppdatera texten varje bildruta (avstånd, namn, lag)
-				local conn
-				conn = runService.RenderStepped:Connect(function()
-					if not espActive or not char or not char.Parent or not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				RunService.RenderStepped:Connect(function()
+					if not state or not char or not char.Parent or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 						billboard.Enabled = false
 						if char:FindFirstChild("Highlight") then char.Highlight.Enabled = false end
 						return
@@ -311,17 +348,11 @@ createToggle("Player ESP", function(state)
 					if char:FindFirstChild("Highlight") then char.Highlight.Enabled = true end
 					
 					local rootPart = char:FindFirstChild("HumanoidRootPart")
-					local localRoot = localPlayer.Character.HumanoidRootPart
+					local localRoot = LocalPlayer.Character.HumanoidRootPart
 					if rootPart and localRoot then
 						local distance = math.floor((rootPart.Position - localRoot.Position).Magnitude)
 						local teamName = plr.Team and plr.Team.Name or "No Team"
-						textLabel.Text = string.VFormat("{0} | Team: {1} | [{2} studs]", {plr.Name, teamName, distance})
-					end
-				end)
-				
-				char.AncestryChanged:Connect(function(_, parent)
-					if not parent then
-						if conn then conn:Disconnect() end
+						textLabel.Text = string.format("%s | Team: %s | [%d studs]", plr.Name, teamName, distance)
 					end
 				end)
 			end
@@ -331,9 +362,6 @@ createToggle("Player ESP", function(state)
 		plr.CharacterAdded:Connect(applyToChar)
 	end
 	
-	for _, plr in pairs(players:GetPlayers()) do
-		setupEsp(plr)
-	end
-	
-	players.PlayerAdded:Connect(setupEsp)
+	for _, plr in pairs(Players:GetPlayers()) do setupEsp(plr) end
+	Players.PlayerAdded:Connect(setupEsp)
 end)
