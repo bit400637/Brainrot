@@ -183,7 +183,7 @@ end)
 
 
 ------------------------------------------------------------------
--- COMBAT & MOVEMENT TAB (Speed, Jump, Aimbot, Noclip, Anti-Teleport)
+-- COMBAT & MOVEMENT TAB (Speed, Jump, Aimbot, Noclip, Anti-TP)
 ------------------------------------------------------------------
 
 -- 1. Speed Boost
@@ -225,9 +225,9 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- 3. Roof Noclip (3s Timer)
+-- 3. Roof Noclip (4s Timer)
 CombatTab:CreateButton({
-	Name = "Roof Noclip (3s)",
+	Name = "Roof Noclip (4s)",
 	Callback = function()
 		local connection = RunService.Stepped:Connect(function()
 			if LocalPlayer.Character then
@@ -243,14 +243,14 @@ CombatTab:CreateButton({
 			end
 		end)
 		
-		task.delay(3, function()
+		task.delay(4, function()
 			if connection then connection:Disconnect() end
 			if tempInfJumpConn then tempInfJumpConn:Disconnect() end
 		end)
 	end,
 })
 
--- 4. No Respawn Teleport (Anti-Teleport)
+-- 4. No Respawn Teleport (Anti-TP)
 local antiTpActive = false
 CombatTab:CreateToggle({
 	Name = "No Respawn Teleport (Anti-TP)",
@@ -270,7 +270,31 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
--- 5. Auto Sword Attack
+-- 5. Anti Bat Knockback
+local antiKnockbackActive = false
+CombatTab:CreateToggle({
+	Name = "Anti Bat Knockback",
+	CurrentValue = false,
+	Flag = "AntiKnockback",
+	Callback = function(Value)
+		antiKnockbackActive = Value
+	end,
+})
+
+RunService.Stepped:Connect(function()
+	if antiKnockbackActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		pcall(function()
+			local rootPart = LocalPlayer.Character.HumanoidRootPart
+			-- Clear out horizontal external push forces/knockback velocity
+			local vel = rootPart.AssemblyLinearVelocity
+			if math.abs(vel.X) > 30 or math.abs(vel.Z) > 30 then
+				rootPart.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+			end
+		end)
+	end
+end)
+
+-- 6. Auto Sword Attack
 local autoSwordActive = false
 CombatTab:CreateToggle({
 	Name = "Auto Sword Attack",
@@ -298,7 +322,7 @@ task.spawn(function()
 	end
 end)
 
--- 6. Sword Aimbot
+-- 7. Sword Aimbot
 local swordAimbotActive = false
 CombatTab:CreateToggle({
 	Name = "Sword Aimbot",
@@ -327,7 +351,6 @@ RunService.RenderStepped:Connect(function()
 				end
 			end
 			
-			-- Look at closest player
 			if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local targetPos = closestPlayer.Character.HumanoidRootPart.Position
 				localRoot.CFrame = CFrame.new(localRoot.Position, Vector3.new(targetPos.X, localRoot.Position.Y, targetPos.Z))
@@ -363,7 +386,7 @@ VisualsTab:CreateToggle({
 					local billboard = Instance.new("BillboardGui")
 					billboard.Name = "EspTag"
 					billboard.Adornee = head
-					billboard.Size = UDim2.new(0, 200, 0, 50)
+					billboard.Size = UDim2.new(0, 250, 0, 50)
 					billboard.StudsOffset = Vector3.new(0, 2.5, 0)
 					billboard.AlwaysOnTop = true
 					
@@ -391,8 +414,13 @@ VisualsTab:CreateToggle({
 						local localRoot = LocalPlayer.Character.HumanoidRootPart
 						if rootPart and localRoot then
 							local distance = math.floor((rootPart.Position - localRoot.Position).Magnitude)
-							local teamName = plr.Team and plr.Team.Name or "No Team"
-							textLabel.Text = string.format("%s | Team: `s | [%d studs]", plr.Name, teamName, distance)
+							
+							-- Find tool the player is currently holding
+							local heldTool = char:FindFirstChildOfClass("Tool")
+							local toolString = heldTool and string.format("[%s] ", heldTool.Name) or ""
+							
+							-- Format: Username [ToolName] [Distance studs]
+							textLabel.Text = string.format("%s %s[%d studs]", plr.Name, toolString, distance)
 						end
 					end)
 				end
