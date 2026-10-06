@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 -- Create Main ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -36,7 +37,7 @@ MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.01, 0, 0.07, 0)
-MainFrame.Size = UDim2.new(0, 260, 0, 420)
+MainFrame.Size = UDim2.new(0, 260, 0, 440)
 MainFrame.Visible = true
 
 local MainCorner = Instance.new("UICorner")
@@ -49,7 +50,7 @@ TitleLabel.Name = "TitleLabel"
 TitleLabel.Parent = MainFrame
 TitleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
 TitleLabel.BorderSizePixel = 0
-TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Size = UDim2.new(1, 0, 0, 35)
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.Text = "  Emil_axelgs GUI"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -59,6 +60,19 @@ TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleLabel
+
+-- Credits Text
+local CreditsLabel = Instance.new("TextLabel")
+CreditsLabel.Name = "CreditsLabel"
+CreditsLabel.Parent = MainFrame
+CreditsLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+CreditsLabel.BorderSizePixel = 0
+CreditsLabel.Position = UDim2.new(0, 0, 0, 37)
+CreditsLabel.Size = UDim2.new(1, 0, 0, 24)
+CreditsLabel.Font = Enum.Font.GothamMedium
+CreditsLabel.Text = "Created by @therageisbest"
+CreditsLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+CreditsLabel.TextSize = 11
 
 -- Make Window Draggable
 local dragging, dragInput, dragStart, startPos
@@ -98,9 +112,9 @@ ScrollingFrame.Parent = MainFrame
 ScrollingFrame.Active = true
 ScrollingFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 ScrollingFrame.BorderSizePixel = 0
-ScrollingFrame.Position = UDim2.new(0, 0, 0, 45)
-ScrollingFrame.Size = UDim2.new(1, 0, 1, -45)
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 920)
+ScrollingFrame.Position = UDim2.new(0, 0, 0, 65)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -65)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 950)
 ScrollingFrame.ScrollBarThickness = 6
 
 local UIListLayout = Instance.new("UIListLayout")
@@ -319,25 +333,7 @@ RoofNoclipButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- 9. Underground Walk Toggle
-createToggle("Underground Walk", function(state)
-	if state then
-		local char = LocalPlayer.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame - Vector3.new(0, 10, 0)
-			for _, part in pairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = false end
-			end
-		end
-	else
-		local char = LocalPlayer.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0)
-		end
-	end
-end)
-
--- 10. Auto Sword Attack Toggle
+-- 9. Auto Sword Attack Toggle
 local autoSwordActive = false
 createToggle("Auto Sword Attack", function(state) autoSwordActive = state end)
 
@@ -355,6 +351,36 @@ task.spawn(function()
 			end)
 		end
 		task.wait(0.1)
+	end
+end)
+
+-- 10. Sword Aimbot Toggle
+local swordAimbotActive = false
+createToggle("Sword Aimbot", function(state) swordAimbotActive = state end)
+
+RunService.RenderStepped:Connect(function()
+	if swordAimbotActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		pcall(function()
+			local localRoot = LocalPlayer.Character.HumanoidRootPart
+			local closestPlayer = nil
+			local shortestDistance = math.huge
+			
+			for _, plr in pairs(Players:GetPlayers()) do
+				if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local targetRoot = plr.Character.HumanoidRootPart
+					local dist = (localRoot.Position - targetRoot.Position).Magnitude
+					if dist < shortestDistance then
+						shortestDistance = dist
+						closestPlayer = plr
+					end
+				end
+			end
+			
+			if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				local targetPos = closestPlayer.Character.HumanoidRootPart.Position
+				localRoot.CFrame = CFrame.new(localRoot.Position, Vector3.new(targetPos.X, localRoot.Position.Y, targetPos.Z))
+			end
+		end)
 	end
 end)
 
