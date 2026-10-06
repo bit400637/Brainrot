@@ -36,7 +36,7 @@ MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.01, 0, 0.07, 0)
-MainFrame.Size = UDim2.new(0, 260, 0, 400)
+MainFrame.Size = UDim2.new(0, 260, 0, 420)
 MainFrame.Visible = true
 
 local MainCorner = Instance.new("UICorner")
@@ -100,7 +100,7 @@ ScrollingFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 ScrollingFrame.BorderSizePixel = 0
 ScrollingFrame.Position = UDim2.new(0, 0, 0, 45)
 ScrollingFrame.Size = UDim2.new(1, 0, 1, -45)
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 750)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 920)
 ScrollingFrame.ScrollBarThickness = 6
 
 local UIListLayout = Instance.new("UIListLayout")
@@ -214,16 +214,16 @@ task.spawn(function()
 	end
 end)
 
--- 4. Auto Buy Diamond Block Controls
-local DiamondInputBox = createTextBox("Diamond Block Item Name...", "Diamond Block")
-local autoBuyDiamondActive = false
-createToggle("Auto Buy Diamond Block", function(state) autoBuyDiamondActive = state end)
+-- 4. Auto Buy Blocks Controls
+local BlockInputBox = createTextBox("Block Item Name...", "Diamond Block")
+local autoBuyBlockActive = false
+createToggle("Auto Buy Blocks", function(state) autoBuyBlockActive = state end)
 
 task.spawn(function()
 	while true do
-		if autoBuyDiamondActive then
+		if autoBuyBlockActive then
 			pcall(function()
-				local args = {"bypassthis2", 28928448, DiamondInputBox.Text, 1}
+				local args = {"bypassthis2", 28928448, BlockInputBox.Text, 1}
 				ReplicatedStorage:WaitForChild("RemoteEvent"):FireServer(unpack(args))
 			end)
 		end
@@ -262,7 +262,22 @@ createToggle("Speed Boost (37)", function(state)
 	end)
 end)
 
--- 7. Roof Noclip Button
+-- 7. Infinite Jump Toggle
+local infJumpActive = false
+createToggle("Infinite Jump", function(state)
+	infJumpActive = state
+end)
+
+UserInputService.JumpRequest:Connect(function()
+	if infJumpActive and LocalPlayer.Character then
+		local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
+end)
+
+-- 8. Roof Noclip (3s Timer Button)
 local RoofNoclipButton = Instance.new("TextButton")
 RoofNoclipButton.Parent = ScrollingFrame
 RoofNoclipButton.BackgroundColor3 = Color3.fromRGB(42, 42, 50)
@@ -290,7 +305,7 @@ RoofNoclipButton.MouseButton1Click:Connect(function()
 		end
 	end)
 	
-	local infJumpConn = UserInputService.JumpRequest:Connect(function()
+	local tempInfJumpConn = UserInputService.JumpRequest:Connect(function()
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 			LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 		end
@@ -298,13 +313,52 @@ RoofNoclipButton.MouseButton1Click:Connect(function()
 	
 	task.delay(3, function()
 		if connection then connection:Disconnect() end
-		if infJumpConn then infJumpConn:Disconnect() end
+		if tempInfJumpConn then tempInfJumpConn:Disconnect() end
 		RoofNoclipButton.Text = "  Roof Noclip (3s)"
 		RoofNoclipButton.TextColor3 = Color3.fromRGB(220, 220, 220)
 	end)
 end)
 
--- 8. Player ESP Toggle
+-- 9. Underground Walk Toggle
+createToggle("Underground Walk", function(state)
+	if state then
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame - Vector3.new(0, 10, 0)
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
+			end
+		end
+	else
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0)
+		end
+	end
+end)
+
+-- 10. Auto Sword Attack Toggle
+local autoSwordActive = false
+createToggle("Auto Sword Attack", function(state) autoSwordActive = state end)
+
+task.spawn(function()
+	while true do
+		if autoSwordActive then
+			pcall(function()
+				local char = LocalPlayer.Character
+				if char then
+					local tool = char:FindFirstChildOfClass("Tool")
+					if tool then
+						tool:Activate()
+					end
+				end
+			end)
+		end
+		task.wait(0.1)
+	end
+end)
+
+-- 11. Player ESP Toggle
 createToggle("Player ESP", function(state)
 	local function setupEsp(plr)
 		if plr == LocalPlayer then return end
