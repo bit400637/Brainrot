@@ -33,9 +33,9 @@ local VisualsTab = Window:CreateTab("Visuals", 4483362458)
 -- 1. Auto Collect Money
 local targetBrainrotName = "Spaghetti Tualetti"
 MainTab:CreateInput({
-	Name = "Target Brainrot Name",
+	Name = "Auto collect brainrot",
 	CurrentValue = "Spaghetti Tualetti",
-	PlaceholderText = "Enter brainrot name...",
+	PlaceholderText = "Auto collect brainrot...",
 	Flag = "BrainrotInput",
 	Callback = function(Text)
 		targetBrainrotName = Text
@@ -250,7 +250,7 @@ CombatTab:CreateButton({
 	end,
 })
 
--- 4. No Respawn Teleport (Anti-Teleport / Anchor to stop rubberbanding back to spawn)
+-- 4. No Respawn Teleport (Anti-Teleport)
 local antiTpActive = false
 CombatTab:CreateToggle({
 	Name = "No Respawn Teleport (Anti-TP)",
@@ -264,7 +264,6 @@ CombatTab:CreateToggle({
 RunService.Stepped:Connect(function()
 	if antiTpActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 		pcall(function()
-			-- Blockera automatiska återställningar eller tvingade positioner från servern
 			local rootPart = LocalPlayer.Character.HumanoidRootPart
 			rootPart.AssemblyLinearVelocity = Vector3.new(0, rootPart.AssemblyLinearVelocity.Y, 0)
 		end)
@@ -328,6 +327,7 @@ RunService.RenderStepped:Connect(function()
 				end
 			end
 			
+			-- Look at closest player
 			if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("HumanoidRootPart") then
 				local targetPos = closestPlayer.Character.HumanoidRootPart.Position
 				localRoot.CFrame = CFrame.new(localRoot.Position, Vector3.new(targetPos.X, localRoot.Position.Y, targetPos.Z))
@@ -392,7 +392,7 @@ VisualsTab:CreateToggle({
 						if rootPart and localRoot then
 							local distance = math.floor((rootPart.Position - localRoot.Position).Magnitude)
 							local teamName = plr.Team and plr.Team.Name or "No Team"
-							textLabel.Text = string.format("%s | Team: %s | [%d studs]", plr.Name, teamName, distance)
+							textLabel.Text = string.format("%s | Team: `s | [%d studs]", plr.Name, teamName, distance)
 						end
 					end)
 				end
