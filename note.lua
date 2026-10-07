@@ -358,8 +358,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- 8. Sword Kill (Select Player + Stick to Back & Kill)
-local playerList = {"None"}
+-- 8. Sword Kill (Select Player + Back Stick & Auto Attack)
 local selectedTargetName = "None"
 
 local function getPlayerNames()
@@ -403,7 +402,7 @@ CombatTab:CreateToggle({
 	end,
 })
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function()
 	if swordKillActive and selectedTargetName ~= "None" then
 		pcall(function()
 			local targetPlr = Players:FindFirstChild(selectedTargetName)
@@ -414,11 +413,19 @@ RunService.RenderStepped:Connect(function()
 				if localChar and localChar:FindFirstChild("HumanoidRootPart") then
 					local localRoot = localChar.HumanoidRootPart
 					
-					-- Stick to the player's back (offset slightly behind and centered)
-					localRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2.5)
-					localRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+					-- Keep local parts non-collidable while sticking to target back
+					for _, part in pairs(localChar:GetDescendants()) do
+						if part:IsA("BasePart") then
+							part.CanCollide = false
+						end
+					end
 					
-					-- Auto activate weapon
+					-- Stick precisely behind their back and match their rotation
+					localRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2)
+					localRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+					localRoot.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+					
+					-- Continuously activate tool (sword)
 					local tool = localChar:FindFirstChildOfClass("Tool")
 					if tool then
 						tool:Activate()
