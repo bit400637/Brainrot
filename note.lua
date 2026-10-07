@@ -285,7 +285,6 @@ RunService.Stepped:Connect(function()
 	if antiKnockbackActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 		pcall(function()
 			local rootPart = LocalPlayer.Character.HumanoidRootPart
-			-- Clear out horizontal external push forces/knockback velocity
 			local vel = rootPart.AssemblyLinearVelocity
 			if math.abs(vel.X) > 30 or math.abs(vel.Z) > 30 then
 				rootPart.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
@@ -359,6 +358,77 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
+-- 8. Sword Kill (Select Player + Stick to Back & Kill)
+local playerList = {"None"}
+local selectedTargetName = "None"
+
+local function getPlayerNames()
+	local names = {"None"}
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			table.insert(names, plr.Name)
+		end
+	end
+	return names
+end
+
+local SwordKillDropdown = CombatTab:CreateDropdown({
+	Name = "Select Player to Sword Kill",
+	Options = getPlayerNames(),
+	CurrentOption = "None",
+	Flag = "SwordKillDrop",
+	Callback = function(Option)
+		selectedTargetName = Option
+	end,
+})
+
+-- Auto refresh player list loop
+task.spawn(function()
+	while true do
+		pcall(function()
+			local updatedList = getPlayerNames()
+			SwordKillDropdown:Refresh(updatedList, true)
+		end)
+		task.wait(3)
+	end
+end)
+
+local swordKillActive = false
+CombatTab:CreateToggle({
+	Name = "Enable Sword Kill Target",
+	CurrentValue = false,
+	Flag = "SwordKillToggle",
+	Callback = function(Value)
+		swordKillActive = Value
+	end,
+})
+
+RunService.RenderStepped:Connect(function()
+	if swordKillActive and selectedTargetName ~= "None" then
+		pcall(function()
+			local targetPlr = Players:FindFirstChild(selectedTargetName)
+			if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+				local targetRoot = targetPlr.Character.HumanoidRootPart
+				local localChar = LocalPlayer.Character
+				
+				if localChar and localChar:FindFirstChild("HumanoidRootPart") then
+					local localRoot = localChar.HumanoidRootPart
+					
+					-- Stick to the player's back (offset slightly behind and centered)
+					localRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2.5)
+					localRoot.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+					
+					-- Auto activate weapon
+					local tool = localChar:FindFirstChildOfClass("Tool")
+					if tool then
+						tool:Activate()
+					end
+				end
+			end
+		end)
+	end
+end)
+
 
 ------------------------------------------------------------------
 -- VISUALS TAB (Player ESP)
@@ -415,11 +485,9 @@ VisualsTab:CreateToggle({
 						if rootPart and localRoot then
 							local distance = math.floor((rootPart.Position - localRoot.Position).Magnitude)
 							
-							-- Find tool the player is currently holding
 							local heldTool = char:FindFirstChildOfClass("Tool")
 							local toolString = heldTool and string.format("[%s] ", heldTool.Name) or ""
 							
-							-- Format: Username [ToolName] [Distance studs]
 							textLabel.Text = string.format("%s %s[%d studs]", plr.Name, toolString, distance)
 						end
 					end)
